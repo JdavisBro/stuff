@@ -24,4 +24,6 @@ for image in images:
     frame += 1
     image.save(f"frames/{frame}.png")
 
+images[0].save("image.gif",save_all=True,append_images=images[1::],loop=0)
+
 print("Completed! To create the gif open all of the pngs in the frames folder as layers in GIMP then save as a gif with animation and frame disposal. (because PIL gif exporting is low quality)")

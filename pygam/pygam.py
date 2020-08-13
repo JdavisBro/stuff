@@ -1,36 +1,62 @@
-import pygame,os,sys,datetime
+import pygame,os,sys,datetime,time
 
 pygame.init()
 
 size = width, height = 1600, 900
-speed = [0, 0]
+
 black = 0, 0, 255
 
 screen = pygame.display.set_mode(size,pygame.RESIZABLE)
 
 image = pygame.image.load("mario.png")
 image = pygame.transform.scale(image, (200,200))
+
 imagerect = image.get_rect()
 imagerect = imagerect.move(20,0)
-ground = pygame.Surface((width,400))
+
+ground = pygame.Surface((width,100))
 ground.fill((0,255,0))
+
 groundrect = ground.get_rect()
-groundrect = groundrect.move(0,500)
+groundrect = groundrect.move(0,800)
+
 pygame.display.set_caption("it's a me mario")
 pygame.display.set_icon(image)
-direction = 1
-acceleration = [0,0]
-jumped = False
+
 start = datetime.datetime.now()
-time = datetime.datetime.now() + datetime.timedelta(seconds=1)
 frames = 0
 previousFrames = 0 
+secondFrames = 0
+
 font = pygame.font.SysFont("monospace", 20)
 fps = font.render(f"{frames} fps", True, [0, 0, 0], [255, 255, 255])
+second = datetime.datetime.now() + datetime.timedelta(seconds=1)
+
 seconds = 1
 gravity = True
+pressed = []
 
-while 1:
+currentFrameTime = 0 
+
+
+class player():
+    direction = 0 # 0 right 1 left
+    speed = [0, 0]
+
+cap = 70
+
+def bind(val,minv,maxv):
+    val += 0.49
+    val = round(val)
+    if val > maxv:
+        return maxv
+    elif val < minv:
+        return minv
+    return val
+
+def frame():
+    global imagerect, size, frames, size, gravity, width, height, screen, pressed, image, player, currentFrameTime, previousFrames, secondFrames, second
+    frameTime = datetime.datetime.now() + datetime.timedelta(milliseconds=(1000/cap))
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
         elif event.type == pygame.VIDEORESIZE:
@@ -43,71 +69,45 @@ while 1:
                 else:
                     gravity = True
             elif event.key == pygame.K_r:
-                acceleration = [0,0]
-                speed = [0,0]
+                player.speed = [0,0]
             elif event.key == pygame.K_ESCAPE:
                 pygame.quit()
+                return
+            pressed.append(pygame.key.name(event.key))
+        elif event.type == pygame.KEYUP:
+            if pygame.key.name(event.key) in pressed:
+                pressed.remove(pygame.key.name(event.key))
 
     imagerect = imagerect.move(0,1)
 
     if imagerect.colliderect(groundrect):
-        if gravity:
-            speed[1] = 0
+        player.speed[1] = 0
+        while imagerect.colliderect(groundrect):
+            imagerect = imagerect.move(0,-1)
+        imagerect = imagerect.move(0,1)
     else:
-        if gravity:
-            speed[1] += 0.25
-    if speed[1] > 2:
-        speed[1] = 2
-    if speed[1] < -2:
-        speed[1] = -2
-
-    if pygame.key.get_pressed()[pygame.K_a] == 1:
-        speed[0] -= 0.25 if speed[0] >= -2 else 0
-        if speed[0] < 0 and (direction == 1 and imagerect.colliderect(groundrect)):
-            direction = 0
-            image = pygame.transform.flip(image,True,False)
-    else:
-        if gravity:
-            speed[0] += 0.25 if speed[0] < 0 else 0
+        player.speed[1] += 0.5
 
     if pygame.key.get_pressed()[pygame.K_d] == 1:
-        speed[0] += 0.25 if speed[0] <= 2 else 0
-        if speed[0] > 0 and (direction == 0 and imagerect.colliderect(groundrect)):
-            direction = 1
+        player.speed[0] += 1
+        if player.direction != 0 and player.speed[0] > 0:
+            player.direction = 0
+            image = pygame.transform.flip(image,True,False)
+    elif pygame.key.get_pressed()[pygame.K_a] == 1:
+        player.speed[0] -= 1
+        if player.direction != 1 and player.speed[0] < 0:
+            player.direction = 1
             image = pygame.transform.flip(image,True,False)
     else:
-        if gravity:
-            speed[0] -= 0.25 if speed[0] > 0 else 0
-
-    if pygame.key.get_pressed()[pygame.K_w]:
-        if (not jumped and imagerect.colliderect(groundrect) == 1) or not gravity:
-            acceleration[1] = -1
-            jumped = True
-    else:
-        jumped = False
-
-    if pygame.key.get_pressed()[pygame.K_s] == 1:
-        acceleration[1] = 1
-    else:
-        if gravity:
-            while imagerect.colliderect(groundrect):
-                imagerect = imagerect.move(0,-1)
-
-    if acceleration[0] != 0 or acceleration[1] != 0:
-        speed[0] += acceleration[0]
-        speed[1] += acceleration[1]
-        if acceleration[0] > 0:
-            acceleration[0] -= 1
-        if acceleration[0] < 0:
-            acceleration[0] += 1
-        if acceleration[1] > 0:
-            acceleration[1] -= 1
-        if acceleration[1] < 0:
-            acceleration[1] += 1
+        player.speed[0] += 1 if player.speed[0] < 0 else 0
+        player.speed[0] -= 1 if player.speed[0] > 0 else 0
 
     imagerect = imagerect.move(0,-1)
 
-    imagerect = imagerect.move(speed)
+    player.speed[0] = bind(player.speed[0],-50,50)
+    player.speed[1] = bind(player.speed[1],-50,50)
+
+    imagerect = imagerect.move(player.speed)
 
     if imagerect.top > size[1]:
         imagerect.bottom = 0
@@ -123,18 +123,30 @@ while 1:
 
     frames += 1
 
-    if time < datetime.datetime.now():
-        time = datetime.datetime.now() + datetime.timedelta(seconds=1)
-
     seconds = (datetime.datetime.now() - start).seconds + round((datetime.datetime.now() - start).microseconds / 1000000,2)
 
     if seconds == 0.0:
         seconds = 1
 
-    fps = font.render(f"{frames/seconds:.2f} fps - speed ({speed[0]:.2f} x {speed[1]:.2f} y) - {frames} frames - {seconds:.2f} seconds - accel ({acceleration[0]:.2f} x {acceleration[1]:.2f} y) - coord ({imagerect.x} x {imagerect.y} y) - gravity {gravity}", True, [0, 0, 0], [255, 255, 255])
+    secondFrames += 1
+
+    if datetime.datetime.now() >= second:
+        second = datetime.datetime.now() + datetime.timedelta(seconds=1)
+        previousFrames = secondFrames
+        secondFrames = 0
+
+    fps = font.render(f"fps {previousFrames} af {frames/seconds:.2f} ({frames}/{seconds:.2f}) s ({player.speed[0]:.2f} x {player.speed[1]:.2f} y) p ({imagerect.x} x {imagerect.y} y) g {'y' if gravity else 'n'} k {pressed}", True, [0, 0, 0], [255, 255, 255])
 
     screen.fill(black)
     screen.blit(ground, groundrect)
     screen.blit(image, imagerect)
     screen.blit(fps,fps.get_rect())
+
     pygame.display.flip()
+
+    if datetime.datetime.now() < frameTime:
+        currentFrameTime = (frameTime - datetime.datetime.now()).microseconds/1000000
+        time.sleep(currentFrameTime)
+
+while 1:
+    frame()

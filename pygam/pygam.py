@@ -43,7 +43,7 @@ class player():
     direction = 0 # 0 right 1 left
     speed = [0, 0]
 
-cap = 70
+cap = 2
 
 def bind(val,minv,maxv):
     val += 0.49

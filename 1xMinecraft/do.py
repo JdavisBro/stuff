@@ -82,7 +82,7 @@ for f in files:
         im2.putdata(newPixels)
     else:
         im2 = Image.new("RGB", im.size,(rgb[0],rgb[1],rgb[2]))
-    if "overlay" in f:
+    if "overlay" in f and removeOverlay:
         im2 = Image.new("RGBA",im.size,(0,0,0,0))
     im2.save("out/"+f)
     if os.path.exists(f+".mcmeta"):

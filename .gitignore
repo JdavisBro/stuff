@@ -2,3 +2,6 @@
 *.png
 gifScrolling/image.gif
 .vscode/launch.json
+1xMinecraft/assets
+1xMinecraft/out/assets
+1xMinecraft/1xPack.zip
